@@ -1,0 +1,6 @@
+[
+    {
+      "keys": ["ctrl+shift+v"],
+      "command": "siba_validator"
+    }
+]

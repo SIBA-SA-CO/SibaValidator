@@ -1,0 +1,14 @@
+[
+    {
+        "caption": "SIBA",
+        "id": "siba",
+        "children":[
+
+        	{
+        		"id":"siba__validar__archivos",
+        		"caption": "Validar archivos de texto",
+        		"command": "siba_validator"
+        	}
+        ]
+    }
+]
