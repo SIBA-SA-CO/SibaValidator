@@ -66,7 +66,8 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 
 	def has_selection(self,view):
 		for sel in view.sel():
-			start, end = sel
+			start = sel.a
+			end = sel.b
 			if start != end:
 				return True
 		return False
