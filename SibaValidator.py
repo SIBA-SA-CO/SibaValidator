@@ -36,15 +36,16 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				continue
 			#print("%s"%viewText)
 			try:
-				postData = urllib.parse.urlencode({'data':viewText}).encode('ascii')
-				postResponse = urllib.request.urlopen(url=postUrl,data=postData)
-				response = JsonObject(postResponse.read().decode('utf-8'))
-				#print("HTTP Response: %s " % postResponse.read())
-				#print("HTTP Response: %s " % response.status)
-				#print("\n=======================\n")
+				if sheet.view().file_name() != None:
+					postData = urllib.parse.urlencode({'data':viewText}).encode('ascii')
+					postResponse = urllib.request.urlopen(url=postUrl,data=postData)
+					response = JsonObject(postResponse.read().decode('utf-8'))
+					response.sheet = sheet
+					reportsData.append(response)
+			except:
+				response = JsonObject('{"value": 500,"notes": ["Error HTTP 500, error en el servidor remoto"],"status":false}')
 				response.sheet = sheet
 				reportsData.append(response)
-			except:
 				print("HTTP error 500 para el archivo %s" %sheet.view().file_name())
 
 
