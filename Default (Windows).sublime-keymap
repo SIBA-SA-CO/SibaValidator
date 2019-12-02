@@ -2,5 +2,9 @@
     {
       "keys": ["ctrl+shift+v"],
       "command": "siba_validator"
+    },
+    {
+      "keys": ["ctrl+shift+l"],
+      "command": "siba_validator_uploader"
     }
 ]

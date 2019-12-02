@@ -9,7 +9,7 @@ import re
 from .deps.JsonObject import JsonObject
 
 
-class Siba_validatorCommand(sublime_plugin.TextCommand):
+class Siba_validatorUploaderCommand(sublime_plugin.TextCommand):
 
 
 	def run(self, edit):
@@ -43,7 +43,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 					fullName = re.split('/|\\\\',sheet.view().file_name())
 					fileName = fullName[(len(fullName)-1)]
 					if fileNameMatchObject:						
-						postData = urllib.parse.urlencode({'data':viewText,'fileName':fileName,'upload':0}).encode('ascii')
+						postData = urllib.parse.urlencode({'data':viewText,'fileName':fileName,'upload':1}).encode('ascii')
 						postResponse = urllib.request.urlopen(url=postUrl,data=postData)
 						response = JsonObject(postResponse.read().decode('utf-8'))
 						response.sheet = sheet

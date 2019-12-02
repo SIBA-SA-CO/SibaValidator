@@ -8,7 +8,12 @@
         		"id":"siba__validar__archivos",
         		"caption": "Validar archivos de texto",
         		"command": "siba_validator"
-        	}
+        	},
+            {
+                "id":"siba__validar__subir__archivos",
+                "caption": "Validar y cargar archivos de texto",
+                "command": "siba_validator_uploader"
+            }
         ]
     }
 ]
