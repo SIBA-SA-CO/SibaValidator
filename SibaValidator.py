@@ -53,8 +53,8 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				response.sheet = sheet
 				reportsData.append(response)
 				print("HTTP error "+str(e.code)+" para el archivo %s " %fileName," el error es: "+e.reason)
-			except:
-				response = JsonObject('{"value": 600,"notes": ["Error desconocido"],"status":false}')
+			except Exception as e :
+				response = JsonObject('{"value": 600,"notes": ["Error '+str(e)+'"],"status":false}')
 				response.sheet = sheet
 				reportsData.append(response)
 				print("Error 600 para el archivo %s " %fileName," error desconocido")
