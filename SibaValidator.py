@@ -7,7 +7,7 @@ import re
 
 #from .Mauricio import MmClase
 from .deps.JsonObject import JsonObject
-
+from datetime import datetime, timedelta
 
 class Siba_validatorCommand(sublime_plugin.TextCommand):
 
@@ -30,6 +30,8 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		for sheet in sublime.active_window().sheets():
 			#print("\n=======================\n")
 			#print("%s \n" % sheet)
+			viewText = self.get_text(sheet.view())
+			self.sibaClean(sheet,viewText,edit)
 			viewText = self.get_text(sheet.view())
 			if len(viewText) <= 1:
 				print("No hay contenido en el archivo")
@@ -129,3 +131,14 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		reportView.insert(edit,0,fullTextReport)
 						
 		return True
+
+	def sibaClean(self,sheet,viewText,edit):
+		fecha=datetime.today()
+		fechaInicio=fecha+timedelta(days=-15)
+		fechaInicio=fechaInicio.strftime('%Y-%m-%d')
+		inicio = viewText.find(fechaInicio)
+		if inicio == -1:
+			pass
+		else:
+			sheet.view().erase(edit, sublime.Region(0,inicio))
+			sheet.view().run_command("save")
