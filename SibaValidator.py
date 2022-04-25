@@ -7,25 +7,26 @@ import re
 
 #from .Mauricio import MmClase
 from .deps.JsonObject import JsonObject
-
+from datetime import datetime, timedelta
 
 class Siba_validatorCommand(sublime_plugin.TextCommand):
 
-
+	settings = sublime.load_settings("SibaValidator.sublime-settings")
+	today=datetime.today()
+	backDate=(today+timedelta(days=settings.get("siba_validator_number_days_ago"))).strftime('%Y-%m-%d')
+	
 	def run(self, edit):
-		
-
 		#postUrl = 'http://192.168.1.8:8800/api/dataload/validate'
-		settings = sublime.load_settings("SibaValidator.sublime-settings")
-		postUrl = settings.get("siba_validator_ws_endpoint")
+		postUrl = self.settings.get("siba_validator_ws_endpoint")
 		headers={}
-		headers['Content-Type'] = settings.get("siba_validator_ws_req_cont_type")
+		headers['Content-Type'] = self.settings.get("siba_validator_ws_req_cont_type")
 		#postData = urllib.parse.urlencode({'data':'MMMMMMAAAAAAAA'}).encode('ascii')
 		#postResponse = urllib.request.urlopen(url=postUrl,data=postData)
 		#print("HTTP Response: %s \n" % postResponse.read())
 		#return True
 
 		reportsData = []
+		listFirstDates = []
 
 		for sheet in sublime.active_window().sheets():
 			#print("\n=======================\n")
@@ -42,7 +43,9 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 					fileNameMatchObject = p.search(sheet.view().file_name())
 					fullName = re.split('/|\\\\',sheet.view().file_name())
 					fileName = fullName[(len(fullName)-1)]
-					if fileNameMatchObject:						
+					if fileNameMatchObject:
+						listFirstDates.append(self.textCleanUp(sheet,viewText,edit))
+						viewText = self.get_text(sheet.view())				
 						postData = urllib.parse.urlencode({'data':viewText,'fileName':fileName,'upload':0}).encode('ascii')
 						postResponse = urllib.request.urlopen(url=postUrl,data=postData)
 						response = JsonObject(postResponse.read().decode('utf-8'))
@@ -59,8 +62,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				reportsData.append(response)
 				print("Error 600 para el archivo %s " %fileName," error desconocido")
 
-
-		self.writeReportView(reportsData,edit)
+		self.writeReportView(reportsData,edit,listFirstDates)
 		#viewText = self.get_text()
 		#print("%s" % viewText)
 		#Itera por todos los archivos abiertos
@@ -85,11 +87,10 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		return False
 
 
-	def writeReportView(self,reportData,edit):
+	def writeReportView(self,reportData,edit,listFirstDates):
 
 		fullTextReport = ''
-		for report in reportData:
-			
+		for report,firstDate in zip(reportData,listFirstDates):
 			p = re.compile('([^/]){5,100}\.[txTX]{3}$')
 			fileNameMatchObject = p.search(report.sheet.view().file_name())
 			if fileNameMatchObject:
@@ -97,6 +98,12 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				fullTextReport = fullTextReport + "Reporte de revisión para el archivo: "+fileName+"\n"
 				if (report.status == True):
 					fullTextReport = fullTextReport + "Estado de la revisión: OK\n"
+					if firstDate == self.backDate:
+						fullTextReport = fullTextReport + "El archivo esta limpio\n"
+					elif firstDate > self.backDate:
+						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
+					else:
+						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.backDate+" \n"
 				else:
 					fullTextReport = fullTextReport +"Estado de la revisión: Error"+"\n"
 					fullTextReport = fullTextReport +"\nLos siguientes son los detalles del error:\n\n"
@@ -118,6 +125,12 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 
 							fullTextReport = fullTextReport +"Descripción: "+note['desc']+"\n"
 							fullTextReport = fullTextReport +'-----'+"\n"
+					if firstDate == self.fifteenDaysAgo:
+						fullTextReport = fullTextReport + "El archivo esta limpio\n"
+					elif firstDate > self.fifteenDaysAgo:
+						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
+					else:
+						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.fifteenDaysAgo+" \n"
 				#print("%s" % fileNameMatchObject.group())
 				fullTextReport = fullTextReport +"\n=======================\n"
 		
@@ -129,3 +142,12 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		reportView.insert(edit,0,fullTextReport)
 						
 		return True
+
+	def textCleanUp(self,sheet,viewText,edit):
+		dateLocation = viewText.find(self.backDate)
+		firstDate = viewText[0:10]
+		if dateLocation == -1:
+			pass
+		else:
+			sheet.view().erase(edit, sublime.Region(0,dateLocation))
+		return firstDate
