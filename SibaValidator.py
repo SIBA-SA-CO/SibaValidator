@@ -11,15 +11,15 @@ from datetime import datetime, timedelta
 
 class Siba_validatorCommand(sublime_plugin.TextCommand):
 
+	settings = sublime.load_settings("SibaValidator.sublime-settings")
 	today=datetime.today()
-	fifteenDaysAgo=(today+timedelta(days=-15)).strftime('%Y-%m-%d')
+	backDate=(today+timedelta(days=settings.get("siba_validator_number_days_ago"))).strftime('%Y-%m-%d')
 	
 	def run(self, edit):
 		#postUrl = 'http://192.168.1.8:8800/api/dataload/validate'
-		settings = sublime.load_settings("SibaValidator.sublime-settings")
-		postUrl = settings.get("siba_validator_ws_endpoint")
+		postUrl = self.settings.get("siba_validator_ws_endpoint")
 		headers={}
-		headers['Content-Type'] = settings.get("siba_validator_ws_req_cont_type")
+		headers['Content-Type'] = self.settings.get("siba_validator_ws_req_cont_type")
 		#postData = urllib.parse.urlencode({'data':'MMMMMMAAAAAAAA'}).encode('ascii')
 		#postResponse = urllib.request.urlopen(url=postUrl,data=postData)
 		#print("HTTP Response: %s \n" % postResponse.read())
@@ -98,12 +98,12 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				fullTextReport = fullTextReport + "Reporte de revisión para el archivo: "+fileName+"\n"
 				if (report.status == True):
 					fullTextReport = fullTextReport + "Estado de la revisión: OK\n"
-					if firstDate == self.fifteenDaysAgo:
+					if firstDate == self.backDate:
 						fullTextReport = fullTextReport + "El archivo esta limpio\n"
-					elif firstDate > self.fifteenDaysAgo:
+					elif firstDate > self.backDate:
 						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
 					else:
-						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.fifteenDaysAgo+" \n"
+						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.backDate+" \n"
 				else:
 					fullTextReport = fullTextReport +"Estado de la revisión: Error"+"\n"
 					fullTextReport = fullTextReport +"\nLos siguientes son los detalles del error:\n\n"
@@ -144,7 +144,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		return True
 
 	def textCleanUp(self,sheet,viewText,edit):
-		dateLocation = viewText.find(self.fifteenDaysAgo)
+		dateLocation = viewText.find(self.backDate)
 		firstDate = viewText[0:10]
 		if dateLocation == -1:
 			pass
