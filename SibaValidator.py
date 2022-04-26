@@ -130,7 +130,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 					elif firstDate > self.fifteenDaysAgo:
 						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
 					else:
-						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.fifteenDaysAgo+" \n"
+						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.backDate+" \n"
 				#print("%s" % fileNameMatchObject.group())
 				fullTextReport = fullTextReport +"\n=======================\n"
 		
