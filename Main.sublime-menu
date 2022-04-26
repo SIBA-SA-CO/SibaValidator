@@ -14,6 +14,11 @@
                 "caption": "Validar y cargar archivos de texto",
                 "command": "siba_validator_uploader"
             }*/
+            {
+                "id":"siba__open__settings",
+                "caption": "Settings",
+                "command": "open_settings"
+            }
         ]
     }
 ]
