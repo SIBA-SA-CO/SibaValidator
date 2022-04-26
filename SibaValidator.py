@@ -11,11 +11,13 @@ from datetime import datetime, timedelta
 
 class Siba_validatorCommand(sublime_plugin.TextCommand):
 
-	settings = sublime.load_settings("SibaValidator.sublime-settings")
 	today=datetime.today()
-	backDate=(today+timedelta(days=settings.get("siba_validator_number_days_ago"))).strftime('%Y-%m-%d')
+	settings = None
+	backDate= None 
 	
 	def run(self, edit):
+		self.settings = sublime.load_settings("SibaValidator.sublime-settings")
+		self.backDate = (self.today+timedelta(days=self.settings.get("siba_validator_number_days_ago"))).strftime('%Y-%m-%d')  
 		#postUrl = 'http://192.168.1.8:8800/api/dataload/validate'
 		postUrl = self.settings.get("siba_validator_ws_endpoint")
 		headers={}
@@ -125,9 +127,9 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 
 							fullTextReport = fullTextReport +"Descripción: "+note['desc']+"\n"
 							fullTextReport = fullTextReport +'-----'+"\n"
-					if firstDate == self.fifteenDaysAgo:
+					if firstDate == self.backDate:
 						fullTextReport = fullTextReport + "El archivo esta limpio\n"
-					elif firstDate > self.fifteenDaysAgo:
+					elif firstDate > self.backDate:
 						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
 					else:
 						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.backDate+" \n"
