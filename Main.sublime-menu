@@ -9,11 +9,11 @@
         		"caption": "Validar archivos de texto",
         		"command": "validator"
         	},
-            {
+            /*{
                 "id":"siba__validar__subir__archivos",
                 "caption": "Validar y cargar archivos de texto",
                 "command": "validator_upload"
-            },
+            },*/
             {
                 "id":"siba__open__settings",
                 "caption": "Settings",
