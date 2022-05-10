@@ -14,10 +14,15 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 	today=datetime.today()
 	settings = None
 	backDate= None 
+	upload=None
+
+	def __init__(self,upload=0):
+		self.upload = upload
 	
 	def run(self, edit):
 		self.settings = sublime.load_settings("SibaValidator.sublime-settings")
 		self.backDate = (self.today+timedelta(days=self.settings.get("siba_validator_number_days_ago"))).strftime('%Y-%m-%d')  
+		autosave = self.settings.get("siba_validator_autosave_file")
 		#postUrl = 'http://192.168.1.8:8800/api/dataload/validate'
 		postUrl = self.settings.get("siba_validator_ws_endpoint")
 		headers={}
@@ -46,9 +51,9 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 					fullName = re.split('/|\\\\',sheet.view().file_name())
 					fileName = fullName[(len(fullName)-1)]
 					if fileNameMatchObject:
-						listFirstDates.append(self.textCleanUp(sheet,viewText,edit))
+						listFirstDates.append(self.textCleanUp(sheet,viewText,edit,autosave))
 						viewText = self.get_text(sheet.view())				
-						postData = urllib.parse.urlencode({'data':viewText,'fileName':fileName,'upload':0}).encode('ascii')
+						postData = urllib.parse.urlencode({'data':viewText,'fileName':fileName,'upload':self.upload}).encode('ascii')
 						postResponse = urllib.request.urlopen(url=postUrl,data=postData)
 						response = JsonObject(postResponse.read().decode('utf-8'))
 						response.sheet = sheet
@@ -145,11 +150,14 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 						
 		return True
 
-	def textCleanUp(self,sheet,viewText,edit):
+	def textCleanUp(self,sheet,viewText,edit,autosave):
 		dateLocation = viewText.find(self.backDate)
 		firstDate = viewText[0:10]
 		if dateLocation == -1:
 			pass
 		else:
 			sheet.view().erase(edit, sublime.Region(0,dateLocation))
+			if(autosave.lower().strip()== "yes"):
+				sheet.view().run_command("save")
+				
 		return firstDate
