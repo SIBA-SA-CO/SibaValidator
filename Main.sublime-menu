@@ -7,13 +7,13 @@
         	{
         		"id":"siba__validar__archivos",
         		"caption": "Validar archivos de texto",
-        		"command": "siba_validator"
+        		"command": "validator"
         	},
-        /*{
+            {
                 "id":"siba__validar__subir__archivos",
                 "caption": "Validar y cargar archivos de texto",
-                "command": "siba_validator_uploader"
-            }*/
+                "command": "validator_upload"
+            },
             {
                 "id":"siba__open__settings",
                 "caption": "Settings",
