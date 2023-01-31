@@ -97,6 +97,11 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 	def writeReportView(self,reportData,edit,listFirstDates):
 
 		fullTextReport = ''
+		md = "# Reporte archivos de texto Sublime \n"
+		mdArchivo = "| Archivo" + " "*56
+		md = md + mdArchivo + '| Estado |\n'
+		md = md + "|----------------------------------------------------------------|:------:|\n"
+		lenArchivo = len(mdArchivo)
 		for report,firstDate in zip(reportData,listFirstDates):
 			p = re.compile('([^/]){5,100}\.[txTX]{3}$')
 			fileNameMatchObject = p.search(report.sheet.view().file_name())
@@ -104,14 +109,31 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				fileName = fileNameMatchObject.group()
 				fullTextReport = fullTextReport + "Reporte de revisión para el archivo: "+fileName+"\n"
 				if (report.status == True):
+
+					mdFileName = "| "+fileName.split('\\')[-1]
+					lenFileName = len(mdFileName)
+					if(lenFileName < lenArchivo):
+						lenDiff = lenArchivo - lenFileName
+						mdFileName = mdFileName + " "*lenDiff
+					md = md + mdFileName + "| OK     |\n"
 					fullTextReport = fullTextReport + "Estado de la revisión: OK\n"
-					if firstDate == self.backDate:
+
+					if (firstDate[1] is False and firstDate[0] > self.backDate):
+						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate[0]+"\n"
+					elif (firstDate[1] is False):
+						fullTextReport = fullTextReport + "No se borro contenido"
+					elif (firstDate[0] == self.backDate and firstDate[1] is True):
 						fullTextReport = fullTextReport + "El archivo esta limpio\n"
-					elif firstDate > self.backDate:
-						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
-					else:
-						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.backDate+" \n"
+					elif (firstDate[1] is True):
+						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate[0]+" hasta la fecha "+self.backDate+" \n"
+
 				else:
+					mdFileName = "| "+fileName.split('\\')[-1]
+					lenFileName = len(mdFileName)
+					if(lenFileName < lenArchivo):
+						lenDiff = lenArchivo - lenFileName
+						mdFileName = mdFileName + " "*lenDiff
+					md = md + mdFileName + "| Error  |\n"
 					fullTextReport = fullTextReport +"Estado de la revisión: Error"+"\n"
 					fullTextReport = fullTextReport +"\nLos siguientes son los detalles del error:\n\n"
 					for note in report.notes:
@@ -132,21 +154,24 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 
 							fullTextReport = fullTextReport +"Descripción: "+note['desc']+"\n"
 							fullTextReport = fullTextReport +'-----'+"\n"
-					if firstDate == self.backDate:
+
+					if (firstDate[1] is False and firstDate[0] > self.backDate):
+						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate[0]+"\n"
+					elif (firstDate[1] is False):
+						fullTextReport = fullTextReport + "No se borro contenido"
+					elif (firstDate[0] == self.backDate and firstDate[1] is True):
 						fullTextReport = fullTextReport + "El archivo esta limpio\n"
-					elif firstDate > self.backDate:
-						fullTextReport = fullTextReport + "El archivo contiene contenido desde "+firstDate+"\n"
 					else:
-						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate+" hasta la fecha "+self.backDate+" \n"
+						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate[0]+" hasta la fecha "+self.backDate+" \n"
 				#print("%s" % fileNameMatchObject.group())
 				fullTextReport = fullTextReport +"\n=======================\n"
 		
 
 		#print("%s" % fullTextReport)
-
+		fullTextReport = md + '\n' + fullTextReport
 		reportView = sublime.active_window().new_file()
-		reportView.set_name("Reporte validación archivos TXT")
-		reportView.insert(edit,0,fullTextReport)
+		reportView.set_name("Reporte validación archivos TXT.md")
+		reportView.insert(edit,0, fullTextReport)
 						
 		return True
 
@@ -154,10 +179,10 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		dateLocation = viewText.find(self.backDate)
 		firstDate = viewText[0:10]
 		if dateLocation == -1:
-			pass
+			return [firstDate,False]
 		else:
 			sheet.view().erase(edit, sublime.Region(0,dateLocation))
 			if(autosave.lower().strip()== "yes"):
 				sheet.view().run_command("save")
 				
-		return firstDate
+			return [firstDate,True]

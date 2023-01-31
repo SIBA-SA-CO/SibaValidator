@@ -1,5 +1,5 @@
 {
-    "siba_validator_ws_endpoint":"http://127.0.0.1:8800/api/dataload/validate",
+    "siba_validator_ws_endpoint":"https://stdvalidador.siba.com.co/api/dataload/validate",
     "siba_validator_ws_req_cont_type":"application/x-form-urlencoded",
     "siba_validator_number_days_ago":-15,
     "siba_validator_autosave_file":"No"
