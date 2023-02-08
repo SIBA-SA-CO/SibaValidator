@@ -18,6 +18,11 @@
                 "id":"siba__open__settings",
                 "caption": "Settings",
                 "command": "open_settings"
+            },
+            {
+                "id":"update__siba__validator",
+                "caption": "Update",
+                "command": "update"
             }
         ]
     }
