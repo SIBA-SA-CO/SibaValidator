@@ -66,13 +66,13 @@ class UpdateCommand(sublime_plugin.TextCommand):
 				ruta_archivos = ruta_extraccion + "/SibaValidator-master"
 				folderFiles = os.listdir(ruta_archivos)
 				
-				lenFileGit = len(folderFiles) - 1
+				lenFileGit = len(folderFiles)
 				count = 0
 
 				for file in folderFiles:
 
 					if(file != "SibaValidator.sublime-settings"):
-
+						
 						ruta_completa = ruta_archivos + "/" +file
 
 						if(os.path.isfile(ruta_completa)):
@@ -80,28 +80,80 @@ class UpdateCommand(sublime_plugin.TextCommand):
 							try:
 
 								os.remove(ruta_final + "/" + file)
+
 								if(shutil.move(ruta_archivos + "/" + file, ruta_final + "/" + file)):
+
 									count+=1
 
 							except:
 								
 								if(os.path.exists(ruta_archivos + "/" + file)):
+
 									if(shutil.move(ruta_archivos + "/" + file, ruta_final + "/" + file)):
+
 										count+=1
 
 
 						elif(os.path.isdir(ruta_completa)):
+
 							try:
 
 								shutil.rmtree(ruta_final + "/" + file)
+
 								if(shutil.copytree(ruta_archivos + "/" + file, ruta_final + "/" + file)):
+
 									count+=1
 
 							except:
 
 								if(os.path.exists(ruta_archivos + "/" + file)):
+
 									if(shutil.copytree(ruta_archivos + "/" + file, ruta_final + "/" + file)):
+
 										count+=1
+						
+					else:
+
+						pathFileSettings = ruta_final + "/" + file
+						openFileSettings = open(pathFileSettings)
+						dataSettings = json.load(openFileSettings)
+						openFileSettings.close()
+
+						ruta_completa = ruta_archivos + "/" +file
+
+						with open(ruta_completa, "r") as jsonFile:
+
+							dataSettingsLast = json.load(jsonFile)
+
+
+						for clave,valor in dataSettings.items():
+
+							dataSettingsLast[clave] = valor
+
+						with open(ruta_completa, "w") as jsonFile:
+							jsonFile.seek(0)
+							json.dump(dataSettingsLast, jsonFile, indent=4)
+							jsonFile.truncate() 
+
+						if(os.path.isfile(ruta_completa)):
+
+							try:
+
+								os.remove(ruta_final + "/" + file)
+
+								if(shutil.move(ruta_archivos + "/" + file, ruta_final + "/" + file)):
+
+									count+=1
+
+							except:
+
+								if(os.path.exists(ruta_archivos + "/" + file)):
+
+									if(shutil.move(ruta_archivos + "/" + file, ruta_final + "/" + file)):
+
+										count+=1
+
+
 
 				if(count != lenFileGit):
 
