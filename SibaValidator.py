@@ -46,7 +46,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			 
 			try:
 				if sheet.view().file_name() != None:
-					p = re.compile('([^/]){5,100}\.[txTX]{3}$')
+					p = re.compile('([^/]){2,100}\.[txTX]{3}$')
 					fileNameMatchObject = p.search(sheet.view().file_name())
 					fullName = re.split('/|\\\\',sheet.view().file_name())
 					fileName = fullName[(len(fullName)-1)]
