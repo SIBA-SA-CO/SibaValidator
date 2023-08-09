@@ -47,9 +47,9 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			try:
 				if sheet.view().file_name() != None:
 					p = re.compile('([^/]){2,100}\.[txTX]{3}$')
-					fileNameMatchObject = p.search(sheet.view().file_name().split("\\")[-1])
 					fullName = re.split('/|\\\\',sheet.view().file_name())
 					fileName = fullName[(len(fullName)-1)]
+					fileNameMatchObject = p.search(fileName)
 					if fileNameMatchObject:
 						listFirstDates.append(self.textCleanUp(sheet,viewText,edit,autosave))
 						viewText = self.get_text(sheet.view())				
@@ -103,8 +103,10 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		md = md + "|----------------------------------------------------------------|:------:|\n"
 		lenArchivo = len(mdArchivo)
 		for report,firstDate in zip(reportData,listFirstDates):
-			p = re.compile('([^/]){5,100}\.[txTX]{3}$')
-			fileNameMatchObject = p.search(report.sheet.view().file_name())
+			p = re.compile('([^/]){2,100}\.[txTX]{3}$')
+			fullName = re.split('/|\\\\',report.sheet.view().file_name())
+			fileName = fullName[(len(fullName)-1)]
+			fileNameMatchObject = p.search(fileName)
 			if fileNameMatchObject:
 				fileName = fileNameMatchObject.group()
 				fullTextReport = fullTextReport + "Reporte de revisión para el archivo: "+fileName+"\n"
