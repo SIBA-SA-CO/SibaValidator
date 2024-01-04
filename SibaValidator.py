@@ -173,7 +173,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		fullTextReport = md + '\n' + fullTextReport
 		reportView = sublime.active_window().new_file()
 		reportView.set_name("Reporte validación archivos TXT.md")
-		reportView.insert(edit,0, fullTextReport)
+		reportView.run_command("insert",{"characters": fullTextReport})
 						
 		return True
 
@@ -183,8 +183,12 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		if dateLocation == -1:
 			return [firstDate,False]
 		else:
-			sheet.view().erase(edit, sublime.Region(0,dateLocation))
+			region = sublime.Region(dateLocation, sheet.view().size())
+			newText = sheet.view().substr(region)
+			sheet.view().run_command("select_all")
+			sheet.view().run_command("insert",{"characters": newText})
 			if(autosave.lower().strip()== "yes"):
-				sheet.view().run_command("save")
+				sublime.set_timeout(lambda: sheet.view().run_command('save'))
+			sheet.view().update()
 				
 			return [firstDate,True]
