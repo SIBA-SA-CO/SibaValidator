@@ -189,6 +189,5 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			sheet.view().run_command("insert",{"characters": newText})
 			if(autosave.lower().strip()== "yes"):
 				sublime.set_timeout(lambda: sheet.view().run_command('save'))
-			sheet.view().update()
 				
 			return [firstDate,True]
