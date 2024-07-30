@@ -4,8 +4,9 @@ import urllib.request
 import urllib.parse
 import json
 import re
-
-#from .Mauricio import MmClase
+import time
+import pickle
+import os
 from .deps.JsonObject import JsonObject
 from datetime import datetime, timedelta
 
@@ -15,35 +16,104 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 	settings = None
 	backDate= None 
 	upload=None
+	authToken = None
+	tokenExpiryTime = None
+
+
 
 	def __init__(self,upload=0):
 		self.upload = upload
 	
 	def run(self, edit):
 		self.settings = sublime.load_settings("SibaValidator.sublime-settings")
-		self.backDate = (self.today+timedelta(days=self.settings.get("siba_validator_number_days_ago"))).strftime('%Y-%m-%d')  
-		autosave = self.settings.get("siba_validator_autosave_file")
-		#postUrl = 'http://192.168.1.8:8800/api/dataload/validate'
-		postUrl = self.settings.get("siba_validator_ws_endpoint")
-		headers={}
-		headers['Content-Type'] = self.settings.get("siba_validator_ws_req_cont_type")
-		#postData = urllib.parse.urlencode({'data':'MMMMMMAAAAAAAA'}).encode('ascii')
-		#postResponse = urllib.request.urlopen(url=postUrl,data=postData)
-		#print("HTTP Response: %s \n" % postResponse.read())
-		#return True
+		days_ago = self.settings.get("siba_validator_number_days_ago")
+		self.backDate = (self.today+timedelta(days=days_ago)).strftime('%Y-%m-%d')
+		self.load_token()
+
+		if not self.authToken or self.is_token_expired():
+			self.show_login_panel(sublime.active_window(),edit)
+		else:
+			self.validate_files(sublime.active_window(),edit)
+
+	def show_login_panel(self,view,edit):
+		view.show_input_panel("Username:", "", lambda username: self.get_password(view,edit,username), None, None)
+
+	def get_password(self, view,edit, username):
+		self.username = username
+		view.show_input_panel("Password:", "", lambda password: self.authenticate(view,edit,username,password), None, None)
+
+	def authenticate(self,view,edit,username,password):
+		authUrl = self.settings.get("siba_validator_auth_endpoint")
+		authData = json.dumps({"username": username, "password": password}).encode('utf-8')
+		req = urllib.request.Request(authUrl, data=authData, headers={'Content-Type': 'application/json'})
+
+		try:
+			with urllib.request.urlopen(req) as response:
+				authResponse = json.loads(response.read().decode('utf-8'))
+				self.authToken = authResponse['token']
+				self.tokenExpiryTime = time.time() + authResponse.get('expires_in', self.settings.get("siba_validator_token_expiration"))
+				self.save_token()
+				self.validate_files(view,edit)
+		except urllib.error.HTTPError as e:
+			sublime.error_message("Authentication failed: HTTP error {}: {}".format(e.code, e.reason))
+		except Exception as e:
+			sublime.error_message("Authentication failed: {}".format(str(e)))
+
+	def get_text(self,view):
+		if not self.has_selection(view):
+			region = sublime.Region(0, view.size())
+			return view.substr(region)
+
+		selected_text = ''
+		for region in view.sel():
+			selected_text = selected_text + view.substr(region) + '\n'
+
+		return selected_text
+
+	def load_token(self):
+		try:
+			cache_path = sublime.cache_path()
+			token_file_path = os.path.join(cache_path, "siba_validator_token.pkl")
+			with open(token_file_path, "rb") as f:
+				data= pickle.load(f)
+				self.authToken = data.get("token")
+				self.tokenExpiryTime = data.get("expiry")
+		except (FileNotFoundError, EOFError) as e:
+			print("Token file not found or empty: ", str(e))
+		except Exception as e:
+			print("Error loading token: ", str(e))
+
+	def save_token(self):
+		try:
+			cache_path = sublime.cache_path()
+			if not os.path.exists(cache_path):
+				os.makedirs(cache_path)
+			token_file_path = os.path.join(cache_path, "siba_validator_token.pkl")
+			with open(token_file_path , "wb") as f:
+				data = {"token": self.authToken,"expiry": self.tokenExpiryTime}
+				pickle.dump(data,f) 
+		except (FileNotFoundError, EOFError) as e:
+			print("Error saving token: ", str(e))
+
+	def is_token_expired(self):
+		if not self.tokenExpiryTime:
+			return True
+		return time.time() > self.tokenExpiryTime
+
+	def validate_files(self,view,edit):
 
 		reportsData = []
 		listFirstDates = []
+		headers = {'Content-Type': self.settings.get("siba_validator_ws_req_cont_type")}
+		autosave = self.settings.get("siba_validator_autosave_file")
+		postUrl = self.settings.get("siba_validator_ws_endpoint")+"?token="+self.authToken
 
-		for sheet in sublime.active_window().sheets():
-			#print("\n=======================\n")
-			#print("%s \n" % sheet)
+		for sheet in view.sheets():
 			viewText = self.get_text(sheet.view())
 			if len(viewText) <= 1:
 				print("No hay contenido en el archivo")
 				continue
-			#print("%s"%viewText)
-			 
+
 			try:
 				if sheet.view().file_name() != None:
 					p = re.compile('([^/]){2,100}\.[txTX]{3}$')
@@ -70,20 +140,6 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				print("Error 600 para el archivo %s " %fileName," error desconocido")
 
 		self.writeReportView(reportsData,edit,listFirstDates)
-		#viewText = self.get_text()
-		#print("%s" % viewText)
-		#Itera por todos los archivos abiertos
-
-	def get_text(self,view):
-		if not self.has_selection(view):
-			region = sublime.Region(0, view.size())
-			return view.substr(region)
-
-		selected_text = ''
-		for region in view.sel():
-			selected_text = selected_text + view.substr(region) + '\n'
-
-		return selected_text
 
 	def has_selection(self,view):
 		for sel in view.sel():
