@@ -54,6 +54,10 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				self.tokenExpiryTime = time.time() + authResponse.get('expires_in', self.settings.get("siba_validator_token_expiration"))
 				self.save_token()
 				self.validate_files(view,edit)
+				for window in sublime.windows():
+					for view in window.views():
+						view.set_status('siba_status', 'Sesión iniciada correctamente')
+				sublime.set_timeout_async(self.clear_status, 60000) 
 		except urllib.error.HTTPError as e:
 			sublime.error_message("Authentication failed: HTTP error {}: {}".format(e.code, e.reason))
 		except Exception as e:
@@ -100,6 +104,10 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			return True
 		return time.time() > self.tokenExpiryTime
 
+	def clear_status(self):
+		for window in sublime.windows():
+			for view in window.views():
+				view.erase_status('siba_status')
 	def validate_files(self,view,edit):
 
 		reportsData = []
