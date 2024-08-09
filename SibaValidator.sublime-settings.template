@@ -5,5 +5,4 @@
     "siba_validator_number_days_ago":-15,
     "siba_validator_autosave_file":"No",
     "siba_validator_font_family":"auto",
-    "siba_validator_token_expiration": 86400
 }

@@ -17,7 +17,6 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 	backDate= None 
 	upload=None
 	authToken = None
-	tokenExpiryTime = None
 
 
 
@@ -30,7 +29,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		self.backDate = (self.today+timedelta(days=days_ago)).strftime('%Y-%m-%d')
 		self.load_token()
 
-		if not self.authToken or self.is_token_expired():
+		if not self.authToken:
 			self.show_login_panel(sublime.active_window(),edit)
 		else:
 			self.validate_files(sublime.active_window(),edit)
@@ -51,7 +50,6 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			with urllib.request.urlopen(req) as response:
 				authResponse = json.loads(response.read().decode('utf-8'))
 				self.authToken = authResponse['token']
-				self.tokenExpiryTime = time.time() + authResponse.get('expires_in', self.settings.get("siba_validator_token_expiration"))
 				self.save_token()
 				self.validate_files(view,edit)
 				for window in sublime.windows():
@@ -81,7 +79,6 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			with open(token_file_path, "rb") as f:
 				data= pickle.load(f)
 				self.authToken = data.get("token")
-				self.tokenExpiryTime = data.get("expiry")
 		except (FileNotFoundError, EOFError) as e:
 			print("Token file not found or empty: ", str(e))
 		except Exception as e:
@@ -94,20 +91,16 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				os.makedirs(cache_path)
 			token_file_path = os.path.join(cache_path, "siba_validator_token.pkl")
 			with open(token_file_path , "wb") as f:
-				data = {"token": self.authToken,"expiry": self.tokenExpiryTime}
+				data = {"token": self.authToken}
 				pickle.dump(data,f) 
 		except (FileNotFoundError, EOFError) as e:
 			print("Error saving token: ", str(e))
-
-	def is_token_expired(self):
-		if not self.tokenExpiryTime:
-			return True
-		return time.time() > self.tokenExpiryTime
 
 	def clear_status(self):
 		for window in sublime.windows():
 			for view in window.views():
 				view.erase_status('siba_status')
+
 	def validate_files(self,view,edit):
 
 		reportsData = []
@@ -137,10 +130,26 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 						response.sheet = sheet
 						reportsData.append(response)
 			except urllib.error.HTTPError as e:
+				error_content = e.read().decode('utf-8')
+				try:
+					error_json = json.loads(error_content)
+					error_message = error_json.get("message", "").lower()
+					if e.code == 500 and "expired token" in error_message:
+						print("Token expirado, reautenticando...")
+						self.authToken = None  # Reset the token
+						for window in sublime.windows():
+							for i in window.views():
+								i.set_status('siba_status', 'Token expirado, reautenticando...')
+						sublime.set_timeout_async(self.clear_status, 60000) 
+						self.show_login_panel(view, edit)  # Reauthentic
+						return		
+				except json.JSONDecodeError:
+					error_message = "Error al decodificar la respuesta de error."
 				response = JsonObject('{"value": 500,"notes": ["Error HTTP '+str(e.code)+': '+e.reason+'"],"status":false}')
 				response.sheet = sheet
 				reportsData.append(response)
 				print("HTTP error "+str(e.code)+" para el archivo %s " %fileName," el error es: "+e.reason)
+				print(f"HTTP error {e.code} para el archivo {fileName}: {error_message}")
 			except Exception as e :
 				response = JsonObject('{"value": 600,"notes": ["Error '+str(e)+'"],"status":false}')
 				response.sheet = sheet

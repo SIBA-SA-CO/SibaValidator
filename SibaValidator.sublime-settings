@@ -1,9 +1,0 @@
-{
-    "siba_validator_ws_endpoint":"http://localhost:8085/api/dataload/validate",
-    "siba_validator_auth_endpoint": "http://localhost:8085/api/login",
-    "siba_validator_ws_req_cont_type":"application/x-form-urlencoded",
-    "siba_validator_number_days_ago":-15,
-    "siba_validator_autosave_file":"No",
-    "siba_validator_font_family":"auto",
-    "siba_validator_token_expiration": 86400
-}
