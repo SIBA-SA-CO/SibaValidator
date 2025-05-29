@@ -134,7 +134,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 				try:
 					error_json = json.loads(error_content)
 					error_message = error_json.get("message", "").lower()
-					if e.code == 500 and "expired token" in error_message:
+					if e.code == 500 and ("expired token" in error_message or "signature verification failed" in error_message):
 						print("Token expirado, reautenticando...")
 						self.authToken = None  # Reset the token
 						for window in sublime.windows():
@@ -212,8 +212,16 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 					fullTextReport = fullTextReport +"Estado de la revisión: Error"+"\n"
 					fullTextReport = fullTextReport +"\nLos siguientes son los detalles del error:\n\n"
 					for note in report.notes:
+						if self.upload == 1:
+							if '[FTP_UPLOAD_ERROR]' in note:
+								desc_label = "Descripción carga:"
+								fullTextReport += "Descripcion validacion: OK\n"
+							else:
+								desc_label = "Descripción:"
+						else:
+							desc_label = "Descripción:"
 						if type(note) is str:
-							fullTextReport = fullTextReport +"Descripción: "+note+"\n"
+							fullTextReport = fullTextReport + f"{desc_label} {note}\n"
 							fullTextReport = fullTextReport +'-----'+"\n"
 						else:
 							
