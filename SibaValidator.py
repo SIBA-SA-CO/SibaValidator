@@ -35,11 +35,13 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 			self.validate_files(sublime.active_window(),edit)
 
 	def show_login_panel(self,view,edit):
-		view.show_input_panel("Username:", "", lambda username: self.get_password(view,edit,username), None, None)
+		panel = view.show_input_panel("Username:", "", lambda username: self.get_password(view, edit, username), None, None)
+		panel.settings().erase("password")
 
 	def get_password(self, view,edit, username):
 		self.username = username
-		view.show_input_panel("Password:", "", lambda password: self.authenticate(view,edit,username,password), None, None)
+		panel = view.show_input_panel("Password:", "", lambda password: self.authenticate(view,edit,username,password), None, None)
+		panel.settings().set("password", True)
 
 	def authenticate(self,view,edit,username,password):
 		authUrl = self.settings.get("siba_validator_auth_endpoint")
