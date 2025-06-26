@@ -172,7 +172,15 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 	def writeReportView(self,reportData,edit,listFirstDates):
 
 		fullTextReport = ''
-		md = "# Reporte archivos de texto Sublime \n"
+		if self.upload == 1:
+			md = "# Reporte archivos de texto Sublime (VALIDAR Y CARGAR)\n"
+			fullTextReport += "Modo: Validación y Carga de archivos\n\n"
+			report_name = "Reporte Validar y Cargar TXT.md"
+		else:
+			md = "# Reporte archivos de texto Sublime (SOLO VALIDAR)\n"
+			fullTextReport += "Modo: Solo Validación de archivos\n\n"
+			report_name = "Reporte Solo Validar TXT.md"
+
 		mdArchivo = "| Archivo" + " "*56
 		md = md + mdArchivo + '| Estado |\n'
 		md = md + "|----------------------------------------------------------------|:------:|\n"
@@ -255,7 +263,7 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 		#print("%s" % fullTextReport)
 		fullTextReport = md + '\n' + fullTextReport
 		reportView = sublime.active_window().new_file()
-		reportView.set_name("Reporte validación archivos TXT.md")
+		reportView.set_name(report_name)
 		reportView.run_command("insert",{"characters": fullTextReport})
 						
 		return True
