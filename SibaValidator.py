@@ -212,6 +212,11 @@ class Siba_validatorCommand(sublime_plugin.TextCommand):
 					elif (firstDate[1] is True):
 						fullTextReport = fullTextReport + "Se borro el contenido desde "+firstDate[0]+" hasta la fecha "+self.backDate+" \n"
 
+					if self.upload == 1:
+						# Guardar cambios antes de cerrar
+						report.sheet.view().run_command('save')
+						report.sheet.view().close()
+
 				else:
 					mdFileName = "| "+fileName.split('\\')[-1]
 					lenFileName = len(mdFileName)
